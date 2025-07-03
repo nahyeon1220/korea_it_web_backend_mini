@@ -15,5 +15,6 @@ public class UserRole {
     private LocalDateTime createDt;
     private LocalDateTime updateDt;
 
-    private List<UserRole> userRoles;
+    private Role role;
+
 }
