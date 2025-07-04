@@ -1,7 +1,9 @@
 package com.korit.BoardStudy.config;
 
-import com.korit.BoardStudy.entity.User;
 import com.korit.BoardStudy.security.filter.JwtAutnenticationFilter;
+import com.korit.BoardStudy.security.handler.OAuth2SuccessHandler;
+import com.korit.BoardStudy.service.OAuth2PrincipalUserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +18,12 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAutnenticationFilter jwtAutnenticationFilter;
+    private final JwtAutnenticationFilter jwtAuthenticationFilter;
+    private final OAuth2PrincipalUserService oAuth2PrincipalUserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -39,22 +43,27 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors(Customizer.withDefaults());
-        http.csrf(csrf->csrf.disable());
-        http.formLogin(formLogin->formLogin.disable());
-        http.httpBasic(httpBasic->httpBasic.disable());
-        http.logout(logout->logout.disable());
+        http.csrf(csrf -> csrf.disable());
+        http.formLogin(formLogin -> formLogin.disable());
+        http.httpBasic(httpBasic -> httpBasic.disable());
+        http.logout(logout -> logout.disable());
 
-        http.sessionManagement(Session->Session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.sessionManagement(Session -> Session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.addFilterBefore(jwtAutnenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.authorizeHttpRequests(auth->{
-            auth.requestMatchers("/auth/**").permitAll();
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http.authorizeHttpRequests(auth -> {
+            auth.requestMatchers("/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll();
             auth.anyRequest().authenticated();
         });
+
+        http.oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2PrincipalUserService))
+                .successHandler(oAuth2SuccessHandler)
+        );
 
         return http.build();
     }
 }
-
