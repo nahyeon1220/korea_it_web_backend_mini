@@ -1,6 +1,6 @@
 package com.korit.BoardStudy.service;
 
-import com.korit.BoardStudy.dto.ApiResDto;
+import com.korit.BoardStudy.dto.ApiRespDto;
 import com.korit.BoardStudy.dto.auth.SigninReqDto;
 import com.korit.BoardStudy.dto.auth.SignupReqDto;
 import com.korit.BoardStudy.entity.User;
@@ -31,17 +31,17 @@ public class AuthService {
     private JwtUtils jwtUtils;
 
     @Transactional(rollbackFor = Exception.class)
-    public ApiResDto<?> signup(SignupReqDto signupReqDto) {
+    public ApiRespDto<?> signup(SignupReqDto signupReqDto) {
         //아이디 중복확인
         Optional<User> userByUsername = userRepository.getUserByUsername(signupReqDto.getUsername());
         if (userByUsername.isPresent()) {
-            return new ApiResDto<>("failed", "이미 사용 중인 아이디입니다.", null);
+            return new ApiRespDto<>("failed", "이미 사용 중인 아이디입니다.", null);
         }
 
         //이메일 중복확인
         Optional<User> userByEmail = userRepository.getUserByEmail(signupReqDto.getEmail());
         if (userByEmail.isPresent()) {
-            return new ApiResDto<>("failed", "이미 사용 중인 이메일입니다.", null);
+            return new ApiRespDto<>("failed", "이미 사용 중인 이메일입니다.", null);
         }
 
         try {
@@ -64,27 +64,27 @@ public class AuthService {
                 throw new RuntimeException("권한 추가에 실패했습니다.");
             }
 
-            return new ApiResDto<>("success", "회원가입이 성공적으로 완료되었습니다.", user);
+            return new ApiRespDto<>("success", "회원가입이 성공적으로 완료되었습니다.", user);
 
         } catch (Exception e) {
-            return new ApiResDto<>("failed", "회원가입 중 오류가 발생하였습니다. :" + e.getMessage(), null);
+            return new ApiRespDto<>("failed", "회원가입 중 오류가 발생하였습니다. :" + e.getMessage(), null);
         }
     }
 
-    public ApiResDto<?> signin(SigninReqDto signinReqDto) {
+    public ApiRespDto<?> signin(SigninReqDto signinReqDto) {
         Optional<User> optionalUser = userRepository.getUserByUsername(signinReqDto.getUsername());
         if (optionalUser.isEmpty()) {
-            return new ApiResDto<>("failed", "아이디 또는 비밀번호가 일치하지 않습니다.",null);
+            return new ApiRespDto<>("failed", "아이디 또는 비밀번호가 일치하지 않습니다.",null);
         }
 
         User user = optionalUser.get();
 
         if (bCryptPasswordEncoder.matches(signinReqDto.getPassword(), user.getPassword())) {
-            return new ApiResDto<>("failed", "아이디 또는 비밀번호가 일치하지 않습니다.", null);
+            return new ApiRespDto<>("failed", "아이디 또는 비밀번호가 일치하지 않습니다.", null);
         }
 
         String accessToken = jwtUtils.generateAccessToken(user.getUserId().toString());
-        return new ApiResDto<>("success", "로그인이 성공적으로 완료되었습니다.", accessToken);
+        return new ApiRespDto<>("success", "로그인이 성공적으로 완료되었습니다.", accessToken);
 
     }
 
