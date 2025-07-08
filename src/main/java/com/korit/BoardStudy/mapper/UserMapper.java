@@ -13,4 +13,5 @@ public interface UserMapper {
     Optional<User> getUserByUsername(String username);
     Optional<User> getUserByEmail(String email);
 
+    int updatePassword(User user);
 }
